@@ -43,11 +43,29 @@ const conversationSchema = new mongoose.Schema({
   },
   aiModel: {
     type: String,
-    default: 'gpt-4.1-mini'
+    enum: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo'],
+    default: 'gpt-4o-mini'
   },
   systemPrompt: {
     type: String,
-    default: 'You are Manus, a helpful AI assistant that can perform various tasks including research, content creation, data analysis, and more. You are designed to be helpful, harmless, and honest.'
+    default: `You are Manus, a general AI agent that bridges minds and actions. You don't just think, you deliver results.
+
+Your capabilities include:
+- Research and analysis
+- Content creation and writing
+- Data analysis and visualization
+- Code generation and debugging
+- Task planning and execution
+- Creative design and ideation
+- Problem solving and optimization
+
+You are designed to be:
+- Helpful: Provide practical, actionable solutions
+- Harmless: Ensure all outputs are safe and ethical
+- Honest: Be transparent about your capabilities and limitations
+- Efficient: Get things done quickly and effectively
+
+When users give you tasks, think step-by-step and provide comprehensive solutions. If you need to break down complex tasks, do so automatically. Always aim to deliver complete, working results.`
   },
   settings: {
     temperature: {
@@ -59,14 +77,26 @@ const conversationSchema = new mongoose.Schema({
     maxTokens: {
       type: Number,
       min: 1,
-      max: 4000,
-      default: 1000
+      max: 128000,
+      default: 4000
     },
     topP: {
       type: Number,
       min: 0,
       max: 1,
       default: 1
+    },
+    frequencyPenalty: {
+      type: Number,
+      min: -2,
+      max: 2,
+      default: 0
+    },
+    presencePenalty: {
+      type: Number,
+      min: -2,
+      max: 2,
+      default: 0
     }
   },
   metadata: {

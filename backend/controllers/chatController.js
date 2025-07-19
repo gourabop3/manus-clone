@@ -129,13 +129,27 @@ const sendMessage = async (req, res) => {
     const messages = conversation.getHistory();
 
     try {
-      // Call OpenAI API
+      // Check if OpenAI API key is configured
+      if (!process.env.OPENAI_API_KEY) {
+        throw new Error('OpenAI API key is not configured. Please set OPENAI_API_KEY environment variable.');
+      }
+
+      // Prepare messages for AI
+      const aiMessages = messages.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }));
+
+      // Call OpenAI API with enhanced parameters
       const completion = await openai.chat.completions.create({
         model: conversation.aiModel,
-        messages: messages,
+        messages: aiMessages,
         temperature: conversation.settings.temperature,
         max_tokens: conversation.settings.maxTokens,
-        top_p: conversation.settings.topP
+        top_p: conversation.settings.topP,
+        frequency_penalty: conversation.settings.frequencyPenalty,
+        presence_penalty: conversation.settings.presencePenalty,
+        stream: false
       });
 
       const aiResponse = completion.choices[0].message.content;
@@ -203,6 +217,121 @@ const sendMessage = async (req, res) => {
       success: false,
       message: 'Server error sending message'
     });
+  }
+};
+
+// @desc    Send streaming message to AI
+// @route   POST /api/chat/conversations/:id/stream
+// @access  Private
+const sendStreamingMessage = async (req, res) => {
+  try {
+    const { message, createTask = false } = req.body;
+    const conversationId = req.params.id;
+
+    let conversation = await Conversation.findOne({
+      _id: conversationId,
+      user: req.user.id
+    });
+
+    if (!conversation) {
+      return res.status(404).json({
+        success: false,
+        message: 'Conversation not found'
+      });
+    }
+
+    // Check if OpenAI API key is configured
+    if (!process.env.OPENAI_API_KEY) {
+      return res.status(500).json({
+        success: false,
+        message: 'OpenAI API key is not configured'
+      });
+    }
+
+    // Add user message
+    await conversation.addMessage('user', message);
+
+    // Get conversation history
+    const messages = conversation.getHistory();
+
+    // Prepare messages for AI
+    const aiMessages = messages.map(msg => ({
+      role: msg.role,
+      content: msg.content
+    }));
+
+    // Set headers for streaming
+    res.writeHead(200, {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Transfer-Encoding': 'chunked',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive'
+    });
+
+    let fullResponse = '';
+
+    try {
+      // Call OpenAI API with streaming
+      const stream = await openai.chat.completions.create({
+        model: conversation.aiModel,
+        messages: aiMessages,
+        temperature: conversation.settings.temperature,
+        max_tokens: conversation.settings.maxTokens,
+        top_p: conversation.settings.topP,
+        frequency_penalty: conversation.settings.frequencyPenalty,
+        presence_penalty: conversation.settings.presencePenalty,
+        stream: true
+      });
+
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content || '';
+        if (content) {
+          fullResponse += content;
+          res.write(`data: ${JSON.stringify({ content, type: 'chunk' })}\n\n`);
+        }
+      }
+
+      // Add AI response to conversation
+      await conversation.addMessage('assistant', fullResponse, {
+        model: conversation.aiModel,
+        usage: { total_tokens: fullResponse.length }
+      });
+
+      // Create task if requested
+      let task = null;
+      if (createTask) {
+        task = await Task.create({
+          title: conversation.title || message.substring(0, 100),
+          description: message,
+          user: req.user.id,
+          conversation: conversation._id,
+          status: 'pending'
+        });
+
+        conversation.task = task._id;
+        await conversation.save();
+      }
+
+      // Send completion signal
+      res.write(`data: ${JSON.stringify({ type: 'complete', task })}\n\n`);
+      res.end();
+
+    } catch (aiError) {
+      console.error('OpenAI API streaming error:', aiError);
+      
+      // Add error message
+      await conversation.addMessage('assistant', 'I apologize, but I encountered an error processing your request. Please try again.', {
+        error: aiError.message
+      });
+
+      res.write(`data: ${JSON.stringify({ type: 'error', message: 'Error communicating with AI service' })}\n\n`);
+      res.end();
+    }
+
+  } catch (error) {
+    console.error('Send streaming message error:', error);
+    res.write(`data: ${JSON.stringify({ type: 'error', message: 'Server error sending message' })}\n\n`);
+    res.end();
   }
 };
 
@@ -308,13 +437,76 @@ const clearConversation = async (req, res) => {
   }
 };
 
+// @desc    Get available AI models
+// @route   GET /api/chat/models
+// @access  Private
+const getAvailableModels = async (req, res) => {
+  try {
+    const models = [
+      {
+        id: 'gpt-4o',
+        name: 'GPT-4o',
+        description: 'Most capable model for complex tasks',
+        maxTokens: 128000,
+        pricing: {
+          input: 0.0025,
+          output: 0.01
+        }
+      },
+      {
+        id: 'gpt-4o-mini',
+        name: 'GPT-4o Mini',
+        description: 'Fast and efficient for most tasks',
+        maxTokens: 128000,
+        pricing: {
+          input: 0.00015,
+          output: 0.0006
+        }
+      },
+      {
+        id: 'gpt-4-turbo',
+        name: 'GPT-4 Turbo',
+        description: 'Balanced performance and speed',
+        maxTokens: 128000,
+        pricing: {
+          input: 0.01,
+          output: 0.03
+        }
+      },
+      {
+        id: 'gpt-3.5-turbo',
+        name: 'GPT-3.5 Turbo',
+        description: 'Fast and cost-effective',
+        maxTokens: 16385,
+        pricing: {
+          input: 0.0005,
+          output: 0.0015
+        }
+      }
+    ];
+
+    res.json({
+      success: true,
+      data: models
+    });
+  } catch (error) {
+    console.error('Get models error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error getting models'
+    });
+  }
+};
+
 module.exports = {
   getConversations,
   getConversation,
   createConversation,
   sendMessage,
+  sendStreamingMessage,
   updateConversation,
   deleteConversation,
-  clearConversation
+  clearConversation,
+  getAvailableModels
 };
 

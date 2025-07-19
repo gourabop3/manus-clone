@@ -62,9 +62,11 @@ export const chatAPI = {
   getConversation: (id) => api.get(`/chat/conversations/${id}`),
   createConversation: (data) => api.post('/chat/conversations', data),
   sendMessage: (id, data) => api.post(`/chat/conversations/${id}/messages`, data),
+  sendStreamingMessage: (id, data) => api.post(`/chat/conversations/${id}/stream`, data),
   updateConversation: (id, data) => api.put(`/chat/conversations/${id}`, data),
   deleteConversation: (id) => api.delete(`/chat/conversations/${id}`),
   clearConversation: (id) => api.post(`/chat/conversations/${id}/clear`),
+  getModels: () => api.get('/chat/models'),
 };
 
 // Files API

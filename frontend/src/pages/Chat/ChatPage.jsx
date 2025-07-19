@@ -7,6 +7,8 @@ import { ScrollArea } from '../../components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
 import { Badge } from '../../components/ui/badge';
 import { Separator } from '../../components/ui/separator';
+import ModelSelector from '../../components/ModelSelector';
+import ConversationSettings from '../../components/ConversationSettings';
 import { chatAPI } from '../../lib/api';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { socketManager } from '../../lib/socket';
@@ -18,7 +20,8 @@ import {
   User,
   Loader2,
   CheckSquare,
-  Trash2
+  Trash2,
+  ListTodo
 } from 'lucide-react';
 
 const ChatPage = () => {
@@ -30,6 +33,8 @@ const ChatPage = () => {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [sendingMessage, setSendingMessage] = useState(false);
+  const [selectedModel, setSelectedModel] = useState('gpt-4o-mini');
+  const [showSettings, setShowSettings] = useState(false);
   const messagesEndRef = useRef(null);
 
   // Initialize with message from home page if provided
@@ -98,7 +103,8 @@ const ChatPage = () => {
   const createNewConversation = async () => {
     try {
       const response = await chatAPI.createConversation({
-        title: 'New Conversation'
+        title: 'New Conversation',
+        aiModel: selectedModel
       });
       const newConv = response.data.data;
       setConversations(prev => [newConv, ...prev]);
@@ -142,34 +148,93 @@ const ChatPage = () => {
     };
     setMessages(prev => [...prev, userMessage]);
 
+    // Add initial AI message for streaming
+    const aiMessage = {
+      role: 'assistant',
+      content: '',
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, aiMessage]);
+
     try {
-      const response = await chatAPI.sendMessage(conversationToUse._id, {
-        message: messageText,
-        createTask: false
+      // Use streaming API for real-time responses
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/chat/conversations/${conversationToUse._id}/stream`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          message: messageText,
+          createTask: false
+        })
       });
 
-      // Update conversation list
-      const updatedConv = response.data.data.conversation;
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let fullResponse = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              
+              if (data.type === 'chunk' && data.content) {
+                fullResponse += data.content;
+                // Update the AI message with streaming content
+                setMessages(prev => 
+                  prev.map((msg, index) => 
+                    index === prev.length - 1 && msg.role === 'assistant'
+                      ? { ...msg, content: fullResponse }
+                      : msg
+                  )
+                );
+              } else if (data.type === 'complete') {
+                // Conversation updated, refresh if needed
+                if (data.task) {
+                  // Handle task creation if needed
+                }
+              } else if (data.type === 'error') {
+                throw new Error(data.message);
+              }
+            } catch (parseError) {
+              console.error('Error parsing streaming data:', parseError);
+            }
+          }
+        }
+      }
+
+      // Refresh conversation to get updated data
+      const convResponse = await chatAPI.getConversation(conversationToUse._id);
+      const updatedConv = convResponse.data.data;
       setConversations(prev => 
         prev.map(conv => 
           conv._id === updatedConv._id ? updatedConv : conv
         )
       );
       setCurrentConversation(updatedConv);
-      
-      // Messages are updated via socket or we can update directly
-      if (response.data.data.conversation.messages) {
-        setMessages(response.data.data.conversation.messages);
-      }
+
     } catch (error) {
       console.error('Error sending message:', error);
-      // Add error message
-      const errorMessage = {
-        role: 'assistant',
-        content: 'Sorry, I encountered an error processing your message. Please try again.',
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      // Update the AI message with error
+      setMessages(prev => 
+        prev.map((msg, index) => 
+          index === prev.length - 1 && msg.role === 'assistant'
+            ? { ...msg, content: 'Sorry, I encountered an error processing your message. Please try again.' }
+            : msg
+        )
+      );
     } finally {
       setSendingMessage(false);
     }
@@ -205,14 +270,22 @@ const ChatPage = () => {
   }
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-slate-50 dark:bg-slate-900">
       {/* Sidebar */}
-      <div className="w-80 border-r bg-muted/30 flex flex-col">
-        <div className="p-4 border-b">
-          <Button onClick={createNewConversation} className="w-full">
+      <div className="w-80 border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex flex-col">
+        <div className="p-4 border-b border-slate-200 dark:border-slate-700">
+          <Button onClick={createNewConversation} className="w-full bg-blue-600 hover:bg-blue-700 text-white">
             <Plus className="mr-2 h-4 w-4" />
             New Conversation
           </Button>
+          
+          {/* Model Selector */}
+          <div className="mt-4">
+            <ModelSelector 
+              selectedModel={selectedModel}
+              onModelChange={setSelectedModel}
+            />
+          </div>
         </div>
         
         <ScrollArea className="flex-1">
@@ -220,18 +293,18 @@ const ChatPage = () => {
             {conversations.map((conversation) => (
               <Card 
                 key={conversation._id}
-                className={`cursor-pointer transition-colors hover:bg-accent ${
-                  currentConversation?._id === conversation._id ? 'bg-accent' : ''
+                className={`cursor-pointer transition-all duration-200 hover:bg-slate-50 dark:hover:bg-slate-700 group ${
+                  currentConversation?._id === conversation._id ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700' : 'bg-white dark:bg-slate-800'
                 }`}
                 onClick={() => selectConversation(conversation)}
               >
                 <CardContent className="p-3">
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-sm truncate">
+                      <h3 className="font-medium text-sm truncate text-slate-900 dark:text-white">
                         {conversation.title || 'New Conversation'}
                       </h3>
-                      <p className="text-xs text-muted-foreground mt-1">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                         {conversation.messageCount || 0} messages
                       </p>
                     </div>
@@ -242,7 +315,7 @@ const ChatPage = () => {
                         e.stopPropagation();
                         deleteConversation(conversation._id);
                       }}
-                      className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100"
+                      className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500"
                     >
                       <Trash2 className="h-3 w-3" />
                     </Button>
@@ -258,33 +331,53 @@ const ChatPage = () => {
       <div className="flex-1 flex flex-col">
         {currentConversation ? (
           <>
+            {/* Settings Panel */}
+            {showSettings && (
+              <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
+                <ConversationSettings
+                  settings={currentConversation.settings}
+                  systemPrompt={currentConversation.systemPrompt}
+                  isOpen={true}
+                  onToggle={() => setShowSettings(false)}
+                />
+              </div>
+            )}
+            
             {/* Chat Header */}
-            <div className="p-4 border-b bg-background">
+            <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <Avatar className="h-8 w-8">
+                  <Avatar className="h-8 w-8 bg-blue-600">
                     <AvatarImage src="/bot-avatar.png" />
-                    <AvatarFallback>
+                    <AvatarFallback className="bg-blue-600 text-white">
                       <Bot className="h-4 w-4" />
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <h2 className="font-semibold">
+                    <h2 className="font-semibold text-slate-900 dark:text-white">
                       {currentConversation.title || 'Manus AI Assistant'}
                     </h2>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
                       AI-powered assistant
                     </p>
                   </div>
                 </div>
-                <Badge variant="secondary">
-                  {currentConversation.aiModel || 'gpt-3.5-turbo'}
-                </Badge>
+                <div className="flex items-center space-x-2">
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                    {currentConversation.aiModel || 'gpt-3.5-turbo'}
+                  </Badge>
+                  <ConversationSettings
+                    settings={currentConversation.settings}
+                    systemPrompt={currentConversation.systemPrompt}
+                    isOpen={showSettings}
+                    onToggle={() => setShowSettings(!showSettings)}
+                  />
+                </div>
               </div>
             </div>
 
             {/* Messages */}
-            <ScrollArea className="flex-1 p-4">
+            <ScrollArea className="flex-1 p-4 bg-slate-50 dark:bg-slate-900">
               <div className="space-y-4">
                 {messages.map((message, index) => (
                   <div
@@ -297,14 +390,14 @@ const ChatPage = () => {
                       {message.role === 'user' ? (
                         <>
                           <AvatarImage src={user?.avatar} />
-                          <AvatarFallback>
+                          <AvatarFallback className="bg-slate-600 text-white">
                             <User className="h-4 w-4" />
                           </AvatarFallback>
                         </>
                       ) : (
                         <>
                           <AvatarImage src="/bot-avatar.png" />
-                          <AvatarFallback>
+                          <AvatarFallback className="bg-blue-600 text-white">
                             <Bot className="h-4 w-4" />
                           </AvatarFallback>
                         </>
@@ -312,15 +405,15 @@ const ChatPage = () => {
                     </Avatar>
                     <div className={`flex-1 max-w-3xl ${message.role === 'user' ? 'text-right' : ''}`}>
                       <div
-                        className={`inline-block p-3 rounded-lg ${
+                        className={`inline-block p-4 rounded-2xl shadow-sm ${
                           message.role === 'user'
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700'
                         }`}
                       >
-                        <p className="whitespace-pre-wrap">{message.content}</p>
+                        <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.content}</p>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-1">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
                         {formatTime(message.timestamp)}
                       </p>
                     </div>
@@ -329,12 +422,12 @@ const ChatPage = () => {
                 {sendingMessage && (
                   <div className="flex items-start space-x-3">
                     <Avatar className="h-8 w-8">
-                      <AvatarFallback>
+                      <AvatarFallback className="bg-blue-600 text-white">
                         <Bot className="h-4 w-4" />
                       </AvatarFallback>
                     </Avatar>
-                    <div className="bg-muted p-3 rounded-lg">
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-2xl shadow-sm">
+                      <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
                     </div>
                   </div>
                 )}
@@ -343,16 +436,20 @@ const ChatPage = () => {
             </ScrollArea>
 
             {/* Message Input */}
-            <div className="p-4 border-t bg-background">
+            <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
               <form onSubmit={sendMessage} className="flex space-x-2">
                 <Input
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="Type your message..."
+                  placeholder="Type your message or give Manus a task..."
                   disabled={sendingMessage}
-                  className="flex-1"
+                  className="flex-1 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-400"
                 />
-                <Button type="submit" disabled={sendingMessage || !newMessage.trim()}>
+                <Button 
+                  type="submit" 
+                  disabled={sendingMessage || !newMessage.trim()}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
                   {sendingMessage ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
@@ -360,20 +457,63 @@ const ChatPage = () => {
                   )}
                 </Button>
               </form>
+              
+              {/* Quick Actions */}
+              <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100 dark:border-slate-700">
+                <div className="flex items-center space-x-2 text-xs text-slate-500 dark:text-slate-400">
+                  <span>Quick actions:</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setNewMessage('Research ')}
+                    className="h-6 px-2 text-xs hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
+                  >
+                    Research
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setNewMessage('Write ')}
+                    className="h-6 px-2 text-xs hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
+                  >
+                    Write
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setNewMessage('Analyze ')}
+                    className="h-6 px-2 text-xs hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
+                  >
+                    Analyze
+                  </Button>
+                </div>
+                
+                {currentConversation.task && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => window.open('/tasks', '_blank')}
+                    className="h-6 px-2 text-xs text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
+                  >
+                    <ListTodo className="h-3 w-3 mr-1" />
+                    View Task
+                  </Button>
+                )}
+              </div>
             </div>
           </>
         ) : (
           /* Empty State */
-          <div className="flex-1 flex items-center justify-center">
+          <div className="flex-1 flex items-center justify-center bg-slate-50 dark:bg-slate-900">
             <div className="text-center space-y-4">
-              <MessageSquare className="h-16 w-16 text-muted-foreground mx-auto" />
+              <MessageSquare className="h-16 w-16 text-slate-400 dark:text-slate-500 mx-auto" />
               <div>
-                <h3 className="text-lg font-semibold">Start a conversation</h3>
-                <p className="text-muted-foreground">
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Start a conversation</h3>
+                <p className="text-slate-600 dark:text-slate-300">
                   Create a new conversation or select an existing one to begin chatting with Manus.
                 </p>
               </div>
-              <Button onClick={createNewConversation}>
+              <Button onClick={createNewConversation} className="bg-blue-600 hover:bg-blue-700 text-white">
                 <Plus className="mr-2 h-4 w-4" />
                 New Conversation
               </Button>
