@@ -38,6 +38,7 @@ const PublicRoute = ({ children }) => {
 
 import ChatPage from './pages/Chat/EnhancedChatPage';
 import TasksPage from './pages/Tasks/TasksPage';
+import AIAgentPage from './pages/AIAgent/AIAgentPage';
 
 const FilesPage = () => (
   <div className="container mx-auto py-8">
@@ -99,6 +100,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <TasksPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="ai-agent" 
+              element={
+                <ProtectedRoute>
+                  <AIAgentPage />
                 </ProtectedRoute>
               } 
             />

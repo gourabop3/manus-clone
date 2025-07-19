@@ -18,7 +18,8 @@ import {
   Menu,
   MessageSquare,
   CheckSquare,
-  FileText
+  FileText,
+  Sparkles
 } from 'lucide-react';
 
 const Header = () => {
@@ -69,6 +70,13 @@ const Header = () => {
             >
               <FileText className="h-4 w-4" />
               <span>Files</span>
+            </Link>
+            <Link 
+              to="/ai-agent" 
+              className="flex items-center space-x-2 text-sm font-medium transition-colors hover:text-primary"
+            >
+              <Sparkles className="h-4 w-4" />
+              <span>AI Agent</span>
             </Link>
           </nav>
         )}
@@ -167,6 +175,14 @@ const Header = () => {
             >
               <FileText className="h-4 w-4" />
               <span>Files</span>
+            </Link>
+            <Link 
+              to="/ai-agent" 
+              className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-accent"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <Sparkles className="h-4 w-4" />
+              <span>AI Agent</span>
             </Link>
           </nav>
         </div>
