@@ -441,7 +441,7 @@ const ChatPage = () => {
                 <Input
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="Type your message..."
+                  placeholder="Type your message or give Manus a task..."
                   disabled={sendingMessage}
                   className="flex-1 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-400"
                 />
@@ -457,6 +457,49 @@ const ChatPage = () => {
                   )}
                 </Button>
               </form>
+              
+              {/* Quick Actions */}
+              <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100 dark:border-slate-700">
+                <div className="flex items-center space-x-2 text-xs text-slate-500 dark:text-slate-400">
+                  <span>Quick actions:</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setNewMessage('Research ')}
+                    className="h-6 px-2 text-xs hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
+                  >
+                    Research
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setNewMessage('Write ')}
+                    className="h-6 px-2 text-xs hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
+                  >
+                    Write
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setNewMessage('Analyze ')}
+                    className="h-6 px-2 text-xs hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
+                  >
+                    Analyze
+                  </Button>
+                </div>
+                
+                {currentConversation.task && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => window.open('/tasks', '_blank')}
+                    className="h-6 px-2 text-xs text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
+                  >
+                    <ListTodo className="h-3 w-3 mr-1" />
+                    View Task
+                  </Button>
+                )}
+              </div>
             </div>
           </>
         ) : (
