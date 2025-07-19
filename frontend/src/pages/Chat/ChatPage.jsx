@@ -7,6 +7,8 @@ import { ScrollArea } from '../../components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
 import { Badge } from '../../components/ui/badge';
 import { Separator } from '../../components/ui/separator';
+import ModelSelector from '../../components/ModelSelector';
+import ConversationSettings from '../../components/ConversationSettings';
 import { chatAPI } from '../../lib/api';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { socketManager } from '../../lib/socket';
@@ -18,7 +20,8 @@ import {
   User,
   Loader2,
   CheckSquare,
-  Trash2
+  Trash2,
+  ListTodo
 } from 'lucide-react';
 
 const ChatPage = () => {
@@ -30,6 +33,8 @@ const ChatPage = () => {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [sendingMessage, setSendingMessage] = useState(false);
+  const [selectedModel, setSelectedModel] = useState('gpt-4o-mini');
+  const [showSettings, setShowSettings] = useState(false);
   const messagesEndRef = useRef(null);
 
   // Initialize with message from home page if provided
@@ -98,7 +103,8 @@ const ChatPage = () => {
   const createNewConversation = async () => {
     try {
       const response = await chatAPI.createConversation({
-        title: 'New Conversation'
+        title: 'New Conversation',
+        aiModel: selectedModel
       });
       const newConv = response.data.data;
       setConversations(prev => [newConv, ...prev]);
@@ -142,34 +148,93 @@ const ChatPage = () => {
     };
     setMessages(prev => [...prev, userMessage]);
 
+    // Add initial AI message for streaming
+    const aiMessage = {
+      role: 'assistant',
+      content: '',
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, aiMessage]);
+
     try {
-      const response = await chatAPI.sendMessage(conversationToUse._id, {
-        message: messageText,
-        createTask: false
+      // Use streaming API for real-time responses
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/chat/conversations/${conversationToUse._id}/stream`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          message: messageText,
+          createTask: false
+        })
       });
 
-      // Update conversation list
-      const updatedConv = response.data.data.conversation;
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let fullResponse = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              
+              if (data.type === 'chunk' && data.content) {
+                fullResponse += data.content;
+                // Update the AI message with streaming content
+                setMessages(prev => 
+                  prev.map((msg, index) => 
+                    index === prev.length - 1 && msg.role === 'assistant'
+                      ? { ...msg, content: fullResponse }
+                      : msg
+                  )
+                );
+              } else if (data.type === 'complete') {
+                // Conversation updated, refresh if needed
+                if (data.task) {
+                  // Handle task creation if needed
+                }
+              } else if (data.type === 'error') {
+                throw new Error(data.message);
+              }
+            } catch (parseError) {
+              console.error('Error parsing streaming data:', parseError);
+            }
+          }
+        }
+      }
+
+      // Refresh conversation to get updated data
+      const convResponse = await chatAPI.getConversation(conversationToUse._id);
+      const updatedConv = convResponse.data.data;
       setConversations(prev => 
         prev.map(conv => 
           conv._id === updatedConv._id ? updatedConv : conv
         )
       );
       setCurrentConversation(updatedConv);
-      
-      // Messages are updated via socket or we can update directly
-      if (response.data.data.conversation.messages) {
-        setMessages(response.data.data.conversation.messages);
-      }
+
     } catch (error) {
       console.error('Error sending message:', error);
-      // Add error message
-      const errorMessage = {
-        role: 'assistant',
-        content: 'Sorry, I encountered an error processing your message. Please try again.',
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      // Update the AI message with error
+      setMessages(prev => 
+        prev.map((msg, index) => 
+          index === prev.length - 1 && msg.role === 'assistant'
+            ? { ...msg, content: 'Sorry, I encountered an error processing your message. Please try again.' }
+            : msg
+        )
+      );
     } finally {
       setSendingMessage(false);
     }
@@ -213,6 +278,14 @@ const ChatPage = () => {
             <Plus className="mr-2 h-4 w-4" />
             New Conversation
           </Button>
+          
+          {/* Model Selector */}
+          <div className="mt-4">
+            <ModelSelector 
+              selectedModel={selectedModel}
+              onModelChange={setSelectedModel}
+            />
+          </div>
         </div>
         
         <ScrollArea className="flex-1">
@@ -258,6 +331,18 @@ const ChatPage = () => {
       <div className="flex-1 flex flex-col">
         {currentConversation ? (
           <>
+            {/* Settings Panel */}
+            {showSettings && (
+              <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
+                <ConversationSettings
+                  settings={currentConversation.settings}
+                  systemPrompt={currentConversation.systemPrompt}
+                  isOpen={true}
+                  onToggle={() => setShowSettings(false)}
+                />
+              </div>
+            )}
+            
             {/* Chat Header */}
             <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
               <div className="flex items-center justify-between">
@@ -277,9 +362,17 @@ const ChatPage = () => {
                     </p>
                   </div>
                 </div>
-                <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                  {currentConversation.aiModel || 'gpt-3.5-turbo'}
-                </Badge>
+                <div className="flex items-center space-x-2">
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                    {currentConversation.aiModel || 'gpt-3.5-turbo'}
+                  </Badge>
+                  <ConversationSettings
+                    settings={currentConversation.settings}
+                    systemPrompt={currentConversation.systemPrompt}
+                    isOpen={showSettings}
+                    onToggle={() => setShowSettings(!showSettings)}
+                  />
+                </div>
               </div>
             </div>
 
