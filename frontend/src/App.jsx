@@ -36,7 +36,7 @@ const PublicRoute = ({ children }) => {
   return !isAuthenticated ? children : <Navigate to="/chat" replace />;
 };
 
-import ChatPage from './pages/Chat/ChatPage';
+import ChatPage from './pages/Chat/EnhancedChatPage';
 import TasksPage from './pages/Tasks/TasksPage';
 
 const FilesPage = () => (
