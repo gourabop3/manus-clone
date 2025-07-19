@@ -217,29 +217,14 @@ Just describe what you want to build, and I'll create it step by step with live 
     
     if (lowerPrompt.includes('todo') || lowerPrompt.includes('task')) {
       return {
-        content: `I'll help you create a todo app! Let me break this down into phases:
+        content: `Creating a complete Todo app with HTML, CSS, and JavaScript. The app includes:
 
-## Phase 1: Project Setup
-- [x] Initialize project structure
-- [x] Set up development environment
+✅ Add/delete todos
+✅ Mark as complete/incomplete  
+✅ Local storage persistence
+✅ Modern responsive design
 
-## Phase 2: Core Features
-- [ ] Create todo item component
-- [ ] Implement add/delete functionality
-- [ ] Add completion toggle
-- [ ] Style the interface
-
-## Phase 3: Advanced Features
-- [ ] Add filtering (all, active, completed)
-- [ ] Implement local storage
-- [ ] Add edit functionality
-
-## Phase 4: Polish & Deploy
-- [ ] Add animations and transitions
-- [ ] Test thoroughly
-- [ ] Deploy to production
-
-Let me start by creating the basic project structure and the main todo component.`,
+I've generated the complete code files for you. Check the editor panel to see the live code!`,
         project: 'Create a Todo App',
         phase: 'Phase 1: Project Setup',
         files: [
@@ -456,19 +441,14 @@ renderTodos();`,
       };
     } else if (lowerPrompt.includes('calculator') || lowerPrompt.includes('calc')) {
       return {
-        content: `I'll create a calculator app for you! Here's my plan:
+        content: `Creating a fully functional calculator with HTML, CSS, and JavaScript. Features include:
 
-## Phase 1: Basic Calculator
-- [x] Create HTML structure
-- [x] Add CSS styling
-- [x] Implement basic operations
+✅ Basic arithmetic operations (+, -, ×, ÷)
+✅ Keyboard support
+✅ Beautiful modern design
+✅ Clear and delete functionality
 
-## Phase 2: Advanced Features
-- [ ] Add scientific functions
-- [ ] Include memory functions
-- [ ] Add keyboard support
-
-Let me start with a beautiful, functional calculator.`,
+I've generated the complete calculator code. Check the editor panel to see the live code!`,
         project: 'Create a Calculator App',
         phase: 'Phase 1: Basic Calculator',
         files: [
