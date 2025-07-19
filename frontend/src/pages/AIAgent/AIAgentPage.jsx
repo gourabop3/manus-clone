@@ -202,11 +202,13 @@ const AIAgentPage = () => {
     const lowerPrompt = prompt.toLowerCase();
     
     if (lowerPrompt.includes('todo') || lowerPrompt.includes('task')) {
-      return {
-        content: `✅ Generated Todo app with full functionality! Check the code editor.`,
-        project: 'Create a Todo App',
-        phase: 'Phase 1: Project Setup',
-        files: [
+      // Check if user wants fullstack
+      if (lowerPrompt.includes('fullstack') || lowerPrompt.includes('backend') || lowerPrompt.includes('api') || lowerPrompt.includes('database')) {
+        return {
+          content: `✅ Generated Fullstack Todo app with Node.js backend and React frontend! Check the code editor.`,
+          project: 'Create a Fullstack Todo App',
+          phase: 'Phase 1: Backend API Setup',
+          files: [
           {
             name: 'index.html',
             content: `<!DOCTYPE html>
