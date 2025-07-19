@@ -4,8 +4,8 @@ services:
     name: manus-clone-backend
     env: node
     plan: free
-    buildCommand: cd backend && npm install
-    startCommand: cd backend && npm start
+    buildCommand: cd backend && pnpm install
+    startCommand: cd backend && pnpm start
     envVars:
       - key: NODE_ENV
         value: production
@@ -29,7 +29,7 @@ services:
     name: manus-clone-frontend
     env: static
     plan: free
-    buildCommand: cd frontend && npm install && npm run build
+    buildCommand: cd frontend && pnpm install && pnpm run build
     staticPublishPath: frontend/dist
     routes:
       - type: rewrite
