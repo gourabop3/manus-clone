@@ -64,21 +64,7 @@ const AIAgentPage = () => {
       const welcomeMessage = {
         id: Date.now(),
         role: 'assistant',
-        content: `👋 Welcome to the AI Agent! I'm here to help you build amazing applications.
-
-I can create:
-• **Web Applications** - Todo apps, calculators, games, portfolios
-• **UI/UX Design** - Modern, responsive interfaces with animations
-• **Advanced Features** - Real-time updates, APIs, authentication
-
-**Try asking me to create:**
-• "Create a todo app"
-• "Build a calculator"
-• "Make a snake game"
-• "Design a portfolio website"
-• "Build a weather app"
-
-Just describe what you want to build, and I'll create it step by step with live code generation! 🚀`,
+        content: `👋 Welcome! I'll generate code in the editor. Try: "Create a todo app"`,
         timestamp: new Date(),
         project: 'AI Agent Ready',
         phase: 'Welcome!'
@@ -217,14 +203,7 @@ Just describe what you want to build, and I'll create it step by step with live 
     
     if (lowerPrompt.includes('todo') || lowerPrompt.includes('task')) {
       return {
-        content: `Creating a complete Todo app with HTML, CSS, and JavaScript. The app includes:
-
-✅ Add/delete todos
-✅ Mark as complete/incomplete  
-✅ Local storage persistence
-✅ Modern responsive design
-
-I've generated the complete code files for you. Check the editor panel to see the live code!`,
+        content: `✅ Generated Todo app with full functionality! Check the code editor.`,
         project: 'Create a Todo App',
         phase: 'Phase 1: Project Setup',
         files: [
@@ -441,14 +420,7 @@ renderTodos();`,
       };
     } else if (lowerPrompt.includes('calculator') || lowerPrompt.includes('calc')) {
       return {
-        content: `Creating a fully functional calculator with HTML, CSS, and JavaScript. Features include:
-
-✅ Basic arithmetic operations (+, -, ×, ÷)
-✅ Keyboard support
-✅ Beautiful modern design
-✅ Clear and delete functionality
-
-I've generated the complete calculator code. Check the editor panel to see the live code!`,
+        content: `✅ Generated Calculator app with keyboard support! Check the code editor.`,
         project: 'Create a Calculator App',
         phase: 'Phase 1: Basic Calculator',
         files: [
@@ -706,24 +678,7 @@ document.addEventListener('keydown', (e) => {
       };
     } else if (lowerPrompt.includes('game') || lowerPrompt.includes('snake') || lowerPrompt.includes('tetris')) {
       return {
-        content: `I'll create a fun Snake game for you! Here's my plan:
-
-## Phase 1: Game Setup
-- [x] Create HTML canvas
-- [x] Set up game loop
-- [x] Implement basic snake movement
-
-## Phase 2: Game Logic
-- [ ] Add food generation
-- [ ] Implement collision detection
-- [ ] Add score system
-
-## Phase 3: Polish
-- [ ] Add game over screen
-- [ ] Implement restart functionality
-- [ ] Add sound effects
-
-Let me start with the basic game structure!`,
+        content: `✅ Generated Snake game with canvas graphics! Check the code editor.`,
         project: 'Create a Snake Game',
         phase: 'Phase 1: Game Setup',
         files: [
@@ -971,32 +926,7 @@ setInterval(() => {
       };
     } else {
       return {
-        content: `I'm here to help you build amazing applications! I can create:
-
-🎯 **Web Applications**
-- Todo apps, calculators, games
-- E-commerce sites, portfolios
-- Social media platforms
-
-🎨 **UI/UX Design**
-- Modern, responsive interfaces
-- Beautiful animations and transitions
-- Mobile-first design
-
-⚡ **Advanced Features**
-- Real-time updates
-- Database integration
-- API development
-- Authentication systems
-
-Just tell me what you'd like to build, and I'll create it step by step with live code generation!
-
-**Try asking me to create:**
-- "Create a todo app"
-- "Build a calculator"
-- "Make a snake game"
-- "Design a portfolio website"
-- "Build a weather app"`,
+        content: `Ready to build! Try: "Create a todo app", "Build a calculator", or "Make a snake game"`,
         project: 'AI Agent Ready',
         phase: 'Waiting for your request...'
       };
