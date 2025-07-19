@@ -198,44 +198,81 @@ const AIAgentPage = () => {
   };
 
   const generateAIResponse = async (prompt) => {
-    // Simulate AI response generation based on the prompt
+    // Dynamic AI response generation based on user prompt
     const lowerPrompt = prompt.toLowerCase();
     
-    if (lowerPrompt.includes('todo') || lowerPrompt.includes('task')) {
-      // Check if user wants fullstack
-      if (lowerPrompt.includes('fullstack') || lowerPrompt.includes('backend') || lowerPrompt.includes('api') || lowerPrompt.includes('database')) {
-        return {
-          content: `✅ Generated Fullstack Todo app with Node.js backend and React frontend! Check the code editor.`,
-          project: 'Create a Fullstack Todo App',
-          phase: 'Phase 1: Backend API Setup',
-          files: [
-          {
-            name: 'index.html',
-            content: `<!DOCTYPE html>
+    // Analyze the prompt to determine project type and requirements
+    const isFullstack = lowerPrompt.includes('fullstack') || lowerPrompt.includes('backend') || lowerPrompt.includes('api') || lowerPrompt.includes('database') || lowerPrompt.includes('server');
+    const isReact = lowerPrompt.includes('react') || lowerPrompt.includes('component');
+    const isNode = lowerPrompt.includes('node') || lowerPrompt.includes('express') || lowerPrompt.includes('server');
+    const isDatabase = lowerPrompt.includes('database') || lowerPrompt.includes('mongodb') || lowerPrompt.includes('sql') || lowerPrompt.includes('postgres');
+    
+    // Generate project name from prompt
+    const projectName = prompt.split(' ').slice(0, 3).join(' ').replace(/[^a-zA-Z0-9\s]/g, '');
+    
+    // Determine what type of app to build based on keywords
+    let appType = 'web';
+    let techStack = 'HTML/CSS/JS';
+    
+    if (isFullstack) {
+      appType = 'fullstack';
+      techStack = 'Node.js + Express + React + Database';
+    } else if (isReact) {
+      appType = 'react';
+      techStack = 'React + Modern JS';
+    } else if (isNode) {
+      appType = 'backend';
+      techStack = 'Node.js + Express';
+    }
+    
+    // Generate appropriate files based on the prompt
+    const files = generateFilesFromPrompt(prompt, appType, techStack);
+    
+    return {
+      content: `✅ Generated ${appType} app with ${techStack}! Check the code editor.`,
+      project: `Create ${projectName}`,
+      phase: `Phase 1: ${appType} Setup`,
+      files: files
+    };
+  };
+
+  const generateFilesFromPrompt = (prompt, appType, techStack) => {
+    const lowerPrompt = prompt.toLowerCase();
+    
+    // Generate appropriate files based on app type
+    if (appType === 'fullstack') {
+      return generateFullstackFiles(prompt);
+    } else if (appType === 'react') {
+      return generateReactFiles(prompt);
+    } else if (appType === 'backend') {
+      return generateBackendFiles(prompt);
+    } else {
+      return generateSimpleWebFiles(prompt);
+    }
+  };
+            const generateSimpleWebFiles = (prompt) => {
+    const lowerPrompt = prompt.toLowerCase();
+    
+    // Generate HTML based on prompt keywords
+    let htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Todo App</title>
+    <title>${prompt.split(' ').slice(0, 3).join(' ')}</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
-        <h1>My Todo List</h1>
-        <div class="todo-input">
-            <input type="text" id="todoInput" placeholder="Add a new task...">
-            <button onclick="addTodo()">Add</button>
-        </div>
-        <ul id="todoList"></ul>
+        <h1>${prompt.split(' ').slice(0, 3).join(' ')}</h1>
+        <div id="app"></div>
     </div>
     <script src="script.js"></script>
 </body>
-</html>`,
-            language: 'html'
-          },
-          {
-            name: 'styles.css',
-            content: `* {
+</html>`;
+
+    // Generate CSS
+    const cssContent = `* {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -256,679 +293,1009 @@ body {
     border-radius: 15px;
     box-shadow: 0 20px 40px rgba(0,0,0,0.1);
     width: 90%;
-    max-width: 500px;
+    max-width: 600px;
+    text-align: center;
 }
 
 h1 {
-    text-align: center;
     color: #333;
     margin-bottom: 2rem;
     font-size: 2.5rem;
 }
 
-.todo-input {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 2rem;
+button {
+    padding: 12px 24px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.3s ease;
+    margin: 10px;
 }
 
-input[type="text"] {
-    flex: 1;
+button:hover {
+    background: #5a6fd8;
+}
+
+input {
     padding: 12px;
     border: 2px solid #e1e5e9;
     border-radius: 8px;
     font-size: 16px;
-    transition: border-color 0.3s ease;
+    margin: 10px;
+    width: 200px;
 }
 
-input[type="text"]:focus {
+input:focus {
     outline: none;
     border-color: #667eea;
+}`;
+
+    // Generate JavaScript based on prompt
+    let jsContent = `// ${prompt} - Generated App
+document.addEventListener('DOMContentLoaded', function() {
+    const app = document.getElementById('app');
+    
+    // Initialize the application
+    initApp();
+    
+    function initApp() {
+        app.innerHTML = '<p>Welcome to your ${prompt.split(' ').slice(0, 3).join(' ')} app!</p>';
+        
+        // Add interactive elements based on prompt
+        if ('${lowerPrompt}'.includes('calculator')) {
+            createCalculator();
+        } else if ('${lowerPrompt}'.includes('todo')) {
+            createTodoApp();
+        } else if ('${lowerPrompt}'.includes('game')) {
+            createGame();
+        } else {
+            createGenericApp();
+        }
+    }
+    
+    function createCalculator() {
+        app.innerHTML = \`
+            <div class="calculator">
+                <input type="text" id="display" readonly>
+                <div class="buttons">
+                    <button onclick="appendNumber('7')">7</button>
+                    <button onclick="appendNumber('8')">8</button>
+                    <button onclick="appendNumber('9')">9</button>
+                    <button onclick="appendNumber('+')">+</button>
+                    <button onclick="appendNumber('4')">4</button>
+                    <button onclick="appendNumber('5')">5</button>
+                    <button onclick="appendNumber('6')">6</button>
+                    <button onclick="appendNumber('-')">-</button>
+                    <button onclick="appendNumber('1')">1</button>
+                    <button onclick="appendNumber('2')">2</button>
+                    <button onclick="appendNumber('3')">3</button>
+                    <button onclick="appendNumber('*')">×</button>
+                    <button onclick="appendNumber('0')">0</button>
+                    <button onclick="clearDisplay()">C</button>
+                    <button onclick="calculate()">=</button>
+                    <button onclick="appendNumber('/')">/</button>
+                </div>
+            </div>
+        \`;
+    }
+    
+    function createTodoApp() {
+        app.innerHTML = \`
+            <div class="todo-app">
+                <input type="text" id="todoInput" placeholder="Add a new task...">
+                <button onclick="addTodo()">Add Todo</button>
+                <ul id="todoList"></ul>
+            </div>
+        \`;
+    }
+    
+    function createGame() {
+        app.innerHTML = \`
+            <div class="game">
+                <h2>Simple Game</h2>
+                <div id="gameArea" style="width: 300px; height: 200px; border: 2px solid #333; margin: 20px auto; position: relative;">
+                    <div id="player" style="width: 20px; height: 20px; background: red; position: absolute; left: 10px; top: 10px;"></div>
+                </div>
+                <button onclick="movePlayer()">Move Player</button>
+            </div>
+        \`;
+    }
+    
+    function createGenericApp() {
+        app.innerHTML = \`
+            <div class="generic-app">
+                <h2>Your Custom App</h2>
+                <p>This is a dynamic app generated based on your prompt: "${prompt}"</p>
+                <button onclick="showMessage()">Click Me!</button>
+                <div id="output"></div>
+            </div>
+        \`;
+    }
+});
+
+// Global functions for calculator
+function appendNumber(num) {
+    const display = document.getElementById('display');
+    if (display) display.value += num;
 }
 
-button {
-    padding: 12px 24px;
-    background: #667eea;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 16px;
-    transition: background 0.3s ease;
+function clearDisplay() {
+    const display = document.getElementById('display');
+    if (display) display.value = '';
 }
 
-button:hover {
-    background: #5a6fd8;
+function calculate() {
+    const display = document.getElementById('display');
+    if (display) {
+        try {
+            display.value = eval(display.value);
+        } catch (e) {
+            display.value = 'Error';
+        }
+    }
 }
 
-ul {
-    list-style: none;
-}
-
-.todo-item {
-    display: flex;
-    align-items: center;
-    padding: 15px;
-    background: #f8f9fa;
-    margin-bottom: 10px;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-}
-
-.todo-item:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-}
-
-.todo-item.completed {
-    opacity: 0.6;
-    background: #e8f5e8;
-}
-
-.todo-item.completed .todo-text {
-    text-decoration: line-through;
-    color: #666;
-}
-
-.todo-text {
-    flex: 1;
-    margin-left: 10px;
-    font-size: 16px;
-}
-
-.delete-btn {
-    background: #ff4757;
-    padding: 8px 12px;
-    font-size: 14px;
-}
-
-.delete-btn:hover {
-    background: #ff3742;
-}`,
-            language: 'css'
-          },
-          {
-            name: 'script.js',
-            content: `let todos = JSON.parse(localStorage.getItem('todos')) || [];
-
+// Global functions for todo app
 function addTodo() {
     const input = document.getElementById('todoInput');
-    const text = input.value.trim();
-    
-    if (text) {
-        const todo = {
-            id: Date.now(),
-            text: text,
-            completed: false
-        };
-        
-        todos.push(todo);
-        saveTodos();
-        renderTodos();
+    const list = document.getElementById('todoList');
+    if (input && list && input.value.trim()) {
+        const li = document.createElement('li');
+        li.textContent = input.value;
+        list.appendChild(li);
         input.value = '';
     }
 }
 
-function toggleTodo(id) {
-    todos = todos.map(todo => 
-        todo.id === id ? { ...todo, completed: !todo.completed } : todo
-    );
-    saveTodos();
-    renderTodos();
-}
-
-function deleteTodo(id) {
-    todos = todos.filter(todo => todo.id !== id);
-    saveTodos();
-    renderTodos();
-}
-
-function saveTodos() {
-    localStorage.setItem('todos', JSON.stringify(todos));
-}
-
-function renderTodos() {
-    const todoList = document.getElementById('todoList');
-    todoList.innerHTML = '';
-    
-    todos.forEach(todo => {
-        const li = document.createElement('li');
-        li.className = \`todo-item \${todo.completed ? 'completed' : ''}\`;
-        
-        li.innerHTML = \`
-            <input type="checkbox" 
-                   \${todo.completed ? 'checked' : ''} 
-                   onchange="toggleTodo(\${todo.id})">
-            <span class="todo-text">\${todo.text}</span>
-            <button class="delete-btn" onclick="deleteTodo(\${todo.id})">Delete</button>
-        \`;
-        
-        todoList.appendChild(li);
-    });
-}
-
-// Enter key to add todo
-document.getElementById('todoInput').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        addTodo();
+// Global functions for game
+function movePlayer() {
+    const player = document.getElementById('player');
+    if (player) {
+        const currentLeft = parseInt(player.style.left) || 10;
+        player.style.left = (currentLeft + 20) % 280 + 'px';
     }
-});
+}
 
-// Initial render
-renderTodos();`,
-            language: 'javascript'
-          }
-        ]
-      };
-    } else if (lowerPrompt.includes('calculator') || lowerPrompt.includes('calc')) {
-      return {
-        content: `✅ Generated Calculator app with keyboard support! Check the code editor.`,
-        project: 'Create a Calculator App',
-        phase: 'Phase 1: Basic Calculator',
-        files: [
-          {
-            name: 'calculator.html',
-            content: `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculator</title>
-    <link rel="stylesheet" href="calculator.css">
-</head>
-<body>
-    <div class="calculator">
-        <div class="display">
-            <div class="previous-operand" id="previousOperand"></div>
-            <div class="current-operand" id="currentOperand">0</div>
+// Global functions for generic app
+function showMessage() {
+    const output = document.getElementById('output');
+    if (output) {
+        output.innerHTML = '<p>Hello! This is your custom app.</p>';
+    }
+}`;
+
+    return [
+      {
+        name: 'index.html',
+        content: htmlContent,
+        language: 'html'
+      },
+      {
+        name: 'styles.css',
+        content: cssContent,
+        language: 'css'
+      },
+      {
+        name: 'script.js',
+        content: jsContent,
+        language: 'javascript'
+      }
+    ];
+  };
+
+  const generateReactFiles = (prompt) => {
+    const lowerPrompt = prompt.toLowerCase();
+    
+    const packageJson = `{
+  "name": "${prompt.split(' ').slice(0, 3).join('-').toLowerCase()}",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-scripts": "5.0.1"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}`;
+
+    const appJs = `import React, { useState, useEffect } from 'react';
+import './App.css';
+
+function App() {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    // Initialize app
+    console.log('${prompt} - React App Loaded');
+  }, []);
+
+  return (
+    <div className="App">
+      <header className="App-header">
+        <h1>${prompt.split(' ').slice(0, 3).join(' ')}</h1>
+        <p>React App Generated from: "${prompt}"</p>
+      </header>
+      <main className="App-main">
+        <div className="app-content">
+          <h2>Your React Application</h2>
+          <p>This is a dynamic React app generated based on your requirements.</p>
+          <button className="primary-button" onClick={() => alert('React App Working!')}>
+            Test Button
+          </button>
         </div>
-        <div class="buttons">
-            <button class="span-two clear" onclick="clearAll()">AC</button>
-            <button class="delete" onclick="deleteNumber()">DEL</button>
-            <button class="operator" onclick="chooseOperation('÷')">÷</button>
-            <button class="number" onclick="appendNumber('7')">7</button>
-            <button class="number" onclick="appendNumber('8')">8</button>
-            <button class="number" onclick="appendNumber('9')">9</button>
-            <button class="operator" onclick="chooseOperation('×')">×</button>
-            <button class="number" onclick="appendNumber('4')">4</button>
-            <button class="number" onclick="appendNumber('5')">5</button>
-            <button class="number" onclick="appendNumber('6')">6</button>
-            <button class="operator" onclick="chooseOperation('-')">-</button>
-            <button class="number" onclick="appendNumber('1')">1</button>
-            <button class="number" onclick="appendNumber('2')">2</button>
-            <button class="number" onclick="appendNumber('3')">3</button>
-            <button class="operator" onclick="chooseOperation('+')">+</button>
-            <button class="number span-two" onclick="appendNumber('0')">0</button>
-            <button class="number" onclick="appendNumber('.')">.</button>
-            <button class="equals" onclick="compute()">=</button>
-        </div>
+      </main>
     </div>
-    <script src="calculator.js"></script>
-</body>
-</html>`,
-            language: 'html'
-          },
-          {
-            name: 'calculator.css',
-            content: `* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+  );
 }
 
-body {
-    font-family: 'Arial', sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+export default App;`;
+
+    const appCss = `* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-.calculator {
-    background: #2c3e50;
-    border-radius: 20px;
-    padding: 20px;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-    width: 320px;
+.App {
+  text-align: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  flex-direction: column;
 }
 
-.display {
-    background: #34495e;
-    padding: 20px;
-    border-radius: 10px;
-    margin-bottom: 20px;
-    text-align: right;
-    min-height: 80px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+.App-header {
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 2rem;
+  color: white;
 }
 
-.previous-operand {
-    color: #bdc3c7;
-    font-size: 18px;
-    min-height: 24px;
+.App-header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
 }
 
-.current-operand {
-    color: white;
-    font-size: 36px;
-    font-weight: bold;
+.App-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
 }
 
-.buttons {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
+.app-content {
+  background: white;
+  padding: 3rem;
+  border-radius: 15px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+  max-width: 600px;
+  width: 100%;
 }
 
-button {
-    padding: 20px;
-    border: none;
-    border-radius: 10px;
-    font-size: 20px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.2s ease;
+.app-content h2 {
+  color: #333;
+  margin-bottom: 1rem;
+  font-size: 2rem;
 }
 
-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+.app-content p {
+  color: #666;
+  margin-bottom: 2rem;
+  line-height: 1.6;
 }
 
-.number {
-    background: #3498db;
-    color: white;
+.primary-button {
+  padding: 12px 24px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.3s ease;
 }
 
-.number:hover {
-    background: #2980b9;
+.primary-button:hover {
+  background: #5a6fd8;
+}`;
+
+    const indexJs = `import React from 'react';
+import ReactDOM from 'react-dom/client';
+import './index.css';
+import App from './App';
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);`;
+
+    const indexCss = `body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-.operator {
-    background: #e74c3c;
-    color: white;
-}
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}`;
 
-.operator:hover {
-    background: #c0392b;
-}
-
-.equals {
-    background: #27ae60;
-    color: white;
-}
-
-.equals:hover {
-    background: #229954;
-}
-
-.clear, .delete {
-    background: #f39c12;
-    color: white;
-}
-
-.clear:hover, .delete:hover {
-    background: #e67e22;
-}
-
-.span-two {
-    grid-column: span 2;
-}`,
-            language: 'css'
-          },
-          {
-            name: 'calculator.js',
-            content: `let currentOperand = '0';
-let previousOperand = '';
-let operation = undefined;
-
-function updateDisplay() {
-    document.getElementById('currentOperand').textContent = currentOperand;
-    document.getElementById('previousOperand').textContent = previousOperand;
-}
-
-function appendNumber(number) {
-    if (number === '.' && currentOperand.includes('.')) return;
-    if (currentOperand === '0' && number !== '.') {
-        currentOperand = number;
-    } else {
-        currentOperand += number;
-    }
-    updateDisplay();
-}
-
-function chooseOperation(op) {
-    if (currentOperand === '') return;
-    if (previousOperand !== '') {
-        compute();
-    }
-    operation = op;
-    previousOperand = currentOperand + ' ' + operation;
-    currentOperand = '';
-    updateDisplay();
-}
-
-function compute() {
-    let computation;
-    const prev = parseFloat(previousOperand);
-    const current = parseFloat(currentOperand);
-    if (isNaN(prev) || isNaN(current)) return;
-    
-    switch (operation) {
-        case '+':
-            computation = prev + current;
-            break;
-        case '-':
-            computation = prev - current;
-            break;
-        case '×':
-            computation = prev * current;
-            break;
-        case '÷':
-            computation = prev / current;
-            break;
-        default:
-            return;
-    }
-    
-    currentOperand = computation.toString();
-    operation = undefined;
-    previousOperand = '';
-    updateDisplay();
-}
-
-function clearAll() {
-    currentOperand = '0';
-    previousOperand = '';
-    operation = undefined;
-    updateDisplay();
-}
-
-function deleteNumber() {
-    if (currentOperand.length === 1) {
-        currentOperand = '0';
-    } else {
-        currentOperand = currentOperand.slice(0, -1);
-    }
-    updateDisplay();
-}
-
-// Keyboard support
-document.addEventListener('keydown', (e) => {
-    if (e.key >= '0' && e.key <= '9' || e.key === '.') {
-        appendNumber(e.key);
-    } else if (e.key === '+' || e.key === '-') {
-        chooseOperation(e.key);
-    } else if (e.key === '*') {
-        chooseOperation('×');
-    } else if (e.key === '/') {
-        chooseOperation('÷');
-    } else if (e.key === 'Enter' || e.key === '=') {
-        compute();
-    } else if (e.key === 'Backspace') {
-        deleteNumber();
-    } else if (e.key === 'Escape') {
-        clearAll();
-    }
-});`,
-            language: 'javascript'
-          }
-        ]
-      };
-    } else if (lowerPrompt.includes('game') || lowerPrompt.includes('snake') || lowerPrompt.includes('tetris')) {
-      return {
-        content: `✅ Generated Snake game with canvas graphics! Check the code editor.`,
-        project: 'Create a Snake Game',
-        phase: 'Phase 1: Game Setup',
-        files: [
-          {
-            name: 'snake.html',
-            content: `<!DOCTYPE html>
+    return [
+      {
+        name: 'package.json',
+        content: packageJson,
+        language: 'json'
+      },
+      {
+        name: 'src/App.js',
+        content: appJs,
+        language: 'javascript'
+      },
+      {
+        name: 'src/App.css',
+        content: appCss,
+        language: 'css'
+      },
+      {
+        name: 'src/index.js',
+        content: indexJs,
+        language: 'javascript'
+      },
+      {
+        name: 'src/index.css',
+        content: indexCss,
+        language: 'css'
+      },
+      {
+        name: 'public/index.html',
+        content: `<!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Snake Game</title>
-    <link rel="stylesheet" href="snake.css">
-</head>
-<body>
-    <div class="game-container">
-        <h1>Snake Game</h1>
-        <div class="score">Score: <span id="score">0</span></div>
-        <canvas id="gameCanvas" width="400" height="400"></canvas>
-        <div class="controls">
-            <p>Use arrow keys to move</p>
-            <button onclick="restartGame()">Restart</button>
-        </div>
-    </div>
-    <script src="snake.js"></script>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${prompt.split(' ').slice(0, 3).join(' ')}</title>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
 </html>`,
-            language: 'html'
-          },
-          {
-            name: 'snake.css',
-            content: `* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+        language: 'html'
+      }
+    ];
+  };
 
-body {
-    font-family: 'Arial', sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
+  const generateBackendFiles = (prompt) => {
+    const lowerPrompt = prompt.toLowerCase();
+    
+    const packageJson = `{
+  "name": "${prompt.split(' ').slice(0, 3).join('-').toLowerCase()}-backend",
+  "version": "1.0.0",
+  "description": "Backend API for ${prompt}",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "body-parser": "^1.20.2"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22"
+  }
+}`;
 
-.game-container {
-    text-align: center;
-    background: white;
-    padding: 2rem;
-    border-radius: 20px;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-}
+    const serverJs = `const express = require('express');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+require('dotenv').config();
 
-h1 {
-    color: #333;
-    margin-bottom: 1rem;
-    font-size: 2.5rem;
-}
+const app = express();
+const PORT = process.env.PORT || 5000;
 
-.score {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: #667eea;
-    margin-bottom: 1rem;
-}
+// Middleware
+app.use(cors());
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
-#gameCanvas {
-    border: 3px solid #333;
-    border-radius: 10px;
-    background: #f0f0f0;
-    margin-bottom: 1rem;
-}
-
-.controls {
-    margin-top: 1rem;
-}
-
-.controls p {
-    color: #666;
-    margin-bottom: 1rem;
-}
-
-button {
-    padding: 12px 24px;
-    background: #667eea;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background 0.3s ease;
-}
-
-button:hover {
-    background: #5a6fd8;
-}`,
-            language: 'css'
-          },
-          {
-            name: 'snake.js',
-            content: `const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-const scoreElement = document.getElementById('score');
-
-const gridSize = 20;
-const tileCount = canvas.width / gridSize;
-
-let snake = [
-    {x: 10, y: 10}
+// Sample data (in real app, this would be a database)
+let items = [
+  { id: 1, name: 'Sample Item 1', description: 'This is a sample item' },
+  { id: 2, name: 'Sample Item 2', description: 'Another sample item' }
 ];
-let food = {x: 15, y: 15};
-let dx = 0;
-let dy = 0;
-let score = 0;
-let gameRunning = true;
 
-function drawGame() {
-    clearCanvas();
-    moveSnake();
-    drawSnake();
-    drawFood();
-    checkCollision();
-    checkFoodCollision();
-}
-
-function clearCanvas() {
-    ctx.fillStyle = '#f0f0f0';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-}
-
-function drawSnake() {
-    ctx.fillStyle = '#4CAF50';
-    snake.forEach(segment => {
-        ctx.fillRect(segment.x * gridSize, segment.y * gridSize, gridSize - 2, gridSize - 2);
-    });
-}
-
-function drawFood() {
-    ctx.fillStyle = '#FF5722';
-    ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize - 2, gridSize - 2);
-}
-
-function moveSnake() {
-    const head = {x: snake[0].x + dx, y: snake[0].y + dy};
-    snake.unshift(head);
-    
-    if (!checkFoodCollision()) {
-        snake.pop();
-    }
-}
-
-function checkCollision() {
-    const head = snake[0];
-    
-    // Wall collision
-    if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
-        gameOver();
-    }
-    
-    // Self collision
-    for (let i = 1; i < snake.length; i++) {
-        if (head.x === snake[i].x && head.y === snake[i].y) {
-            gameOver();
-        }
-    }
-}
-
-function checkFoodCollision() {
-    const head = snake[0];
-    if (head.x === food.x && head.y === food.y) {
-        score += 10;
-        scoreElement.textContent = score;
-        generateFood();
-        return true;
-    }
-    return false;
-}
-
-function generateFood() {
-    food = {
-        x: Math.floor(Math.random() * tileCount),
-        y: Math.floor(Math.random() * tileCount)
-    };
-    
-    // Make sure food doesn't spawn on snake
-    snake.forEach(segment => {
-        if (segment.x === food.x && segment.y === food.y) {
-            generateFood();
-        }
-    });
-}
-
-function gameOver() {
-    gameRunning = false;
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    ctx.fillStyle = 'white';
-    ctx.font = '30px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('Game Over!', canvas.width / 2, canvas.height / 2 - 20);
-    
-    ctx.font = '20px Arial';
-    ctx.fillText('Press Restart to play again', canvas.width / 2, canvas.height / 2 + 20);
-}
-
-function restartGame() {
-    snake = [{x: 10, y: 10}];
-    food = {x: 15, y: 15};
-    dx = 0;
-    dy = 0;
-    score = 0;
-    scoreElement.textContent = score;
-    gameRunning = true;
-}
-
-document.addEventListener('keydown', (e) => {
-    if (!gameRunning) return;
-    
-    switch(e.key) {
-        case 'ArrowUp':
-            if (dy !== 1) { dx = 0; dy = -1; }
-            break;
-        case 'ArrowDown':
-            if (dy !== -1) { dx = 0; dy = 1; }
-            break;
-        case 'ArrowLeft':
-            if (dx !== 1) { dx = -1; dy = 0; }
-            break;
-        case 'ArrowRight':
-            if (dx !== -1) { dx = 1; dy = 0; }
-            break;
-    }
+// Routes
+app.get('/', (req, res) => {
+  res.json({ 
+    message: '${prompt} API is running!',
+    endpoints: [
+      'GET /api/items - Get all items',
+      'POST /api/items - Create new item',
+      'PUT /api/items/:id - Update item',
+      'DELETE /api/items/:id - Delete item'
+    ]
+  });
 });
 
-// Game loop
-setInterval(() => {
-    if (gameRunning) {
-        drawGame();
+// GET all items
+app.get('/api/items', (req, res) => {
+  res.json(items);
+});
+
+// POST new item
+app.post('/api/items', (req, res) => {
+  const { name, description } = req.body;
+  const newItem = {
+    id: items.length + 1,
+    name: name || 'New Item',
+    description: description || 'No description'
+  };
+  items.push(newItem);
+  res.status(201).json(newItem);
+});
+
+// PUT update item
+app.put('/api/items/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  const { name, description } = req.body;
+  
+  const itemIndex = items.findIndex(item => item.id === id);
+  if (itemIndex === -1) {
+    return res.status(404).json({ error: 'Item not found' });
+  }
+  
+  items[itemIndex] = { ...items[itemIndex], name, description };
+  res.json(items[itemIndex]);
+});
+
+// DELETE item
+app.delete('/api/items/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  const itemIndex = items.findIndex(item => item.id === id);
+  
+  if (itemIndex === -1) {
+    return res.status(404).json({ error: 'Item not found' });
+  }
+  
+  items.splice(itemIndex, 1);
+  res.json({ message: 'Item deleted successfully' });
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Something went wrong!' });
+});
+
+// 404 handler
+app.use('*', (req, res) => {
+  res.status(404).json({ error: 'Route not found' });
+});
+
+app.listen(PORT, () => {
+  console.log(\`${prompt} server running on port \${PORT}\`);
+  console.log(\`Visit http://localhost:\${PORT} for API documentation\`);
+});`;
+
+    const envFile = `PORT=5000
+NODE_ENV=development
+# Add your database connection strings here
+# DATABASE_URL=your_database_url
+# JWT_SECRET=your_jwt_secret`;
+
+    const readme = `# ${prompt} Backend API
+
+## Description
+This is a Node.js/Express backend API generated for: ${prompt}
+
+## Installation
+\`\`\`bash
+npm install
+\`\`\`
+
+## Running the server
+\`\`\`bash
+npm start
+# or for development
+npm run dev
+\`\`\`
+
+## API Endpoints
+- GET / - API information
+- GET /api/items - Get all items
+- POST /api/items - Create new item
+- PUT /api/items/:id - Update item
+- DELETE /api/items/:id - Delete item
+
+## Environment Variables
+Create a .env file with:
+- PORT (default: 5000)
+- NODE_ENV (default: development)
+`;
+
+    return [
+      {
+        name: 'package.json',
+        content: packageJson,
+        language: 'json'
+      },
+      {
+        name: 'server.js',
+        content: serverJs,
+        language: 'javascript'
+      },
+      {
+        name: '.env',
+        content: envFile,
+        language: 'env'
+      },
+      {
+        name: 'README.md',
+        content: readme,
+        language: 'markdown'
+      }
+    ];
+  };
+
+  const generateFullstackFiles = (prompt) => {
+    const lowerPrompt = prompt.toLowerCase();
+    
+    // Frontend files
+    const frontendPackageJson = `{
+  "name": "${prompt.split(' ').slice(0, 3).join('-').toLowerCase()}-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-scripts": "5.0.1",
+    "axios": "^1.4.0"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "proxy": "http://localhost:5000"
+}`;
+
+    const frontendAppJs = `import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import './App.css';
+
+function App() {
+  const [items, setItems] = useState([]);
+  const [newItem, setNewItem] = useState({ name: '', description: '' });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchItems();
+  }, []);
+
+  const fetchItems = async () => {
+    try {
+      const response = await axios.get('/api/items');
+      setItems(response.data);
+    } catch (error) {
+      console.error('Error fetching items:', error);
+    } finally {
+      setLoading(false);
     }
-}, 150);`,
-            language: 'javascript'
-          }
-        ]
-      };
-    } else {
+  };
+
+  const addItem = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post('/api/items', newItem);
+      setItems([...items, response.data]);
+      setNewItem({ name: '', description: '' });
+    } catch (error) {
+      console.error('Error adding item:', error);
+    }
+  };
+
+  const deleteItem = async (id) => {
+    try {
+      await axios.delete(\`/api/items/\${id}\`);
+      setItems(items.filter(item => item.id !== id));
+    } catch (error) {
+      console.error('Error deleting item:', error);
+    }
+  };
+
+  if (loading) {
+    return <div className="App">Loading...</div>;
+  }
+
+  return (
+    <div className="App">
+      <header className="App-header">
+        <h1>${prompt.split(' ').slice(0, 3).join(' ')}</h1>
+        <p>Fullstack App with React Frontend & Node.js Backend</p>
+      </header>
+      
+      <main className="App-main">
+        <div className="app-content">
+          <h2>Add New Item</h2>
+          <form onSubmit={addItem} className="form">
+            <input
+              type="text"
+              placeholder="Item name"
+              value={newItem.name}
+              onChange={(e) => setNewItem({...newItem, name: e.target.value})}
+              required
+            />
+            <input
+              type="text"
+              placeholder="Description"
+              value={newItem.description}
+              onChange={(e) => setNewItem({...newItem, description: e.target.value})}
+            />
+            <button type="submit">Add Item</button>
+          </form>
+
+          <h2>Items List</h2>
+          <div className="items-list">
+            {items.map(item => (
+              <div key={item.id} className="item">
+                <h3>{item.name}</h3>
+                <p>{item.description}</p>
+                <button onClick={() => deleteItem(item.id)} className="delete-btn">
+                  Delete
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+export default App;`;
+
+    const frontendAppCss = `* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.App {
+  text-align: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  flex-direction: column;
+}
+
+.App-header {
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 2rem;
+  color: white;
+}
+
+.App-header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.App-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.app-content {
+  background: white;
+  padding: 3rem;
+  border-radius: 15px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+  max-width: 800px;
+  width: 100%;
+}
+
+.form {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 2rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.form input {
+  padding: 12px;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  font-size: 16px;
+  min-width: 200px;
+}
+
+.form input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.form button {
+  padding: 12px 24px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.form button:hover {
+  background: #5a6fd8;
+}
+
+.items-list {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.item {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 10px;
+  border: 1px solid #e1e5e9;
+}
+
+.item h3 {
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.item p {
+  color: #666;
+  margin-bottom: 1rem;
+}
+
+.delete-btn {
+  background: #ff4757;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.delete-btn:hover {
+  background: #ff3742;
+}`;
+
+    // Backend files
+    const backendPackageJson = `{
+  "name": "${prompt.split(' ').slice(0, 3).join('-').toLowerCase()}-backend",
+  "version": "1.0.0",
+  "description": "Backend API for ${prompt}",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "body-parser": "^1.20.2"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22"
+  }
+}`;
+
+    const backendServerJs = `const express = require('express');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+require('dotenv').config();
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+// Middleware
+app.use(cors());
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+// Sample data (in real app, this would be a database)
+let items = [
+  { id: 1, name: 'Sample Item 1', description: 'This is a sample item' },
+  { id: 2, name: 'Sample Item 2', description: 'Another sample item' }
+];
+
+// Routes
+app.get('/', (req, res) => {
+  res.json({ 
+    message: '${prompt} Fullstack API is running!',
+    endpoints: [
+      'GET /api/items - Get all items',
+      'POST /api/items - Create new item',
+      'PUT /api/items/:id - Update item',
+      'DELETE /api/items/:id - Delete item'
+    ]
+  });
+});
+
+// GET all items
+app.get('/api/items', (req, res) => {
+  res.json(items);
+});
+
+// POST new item
+app.post('/api/items', (req, res) => {
+  const { name, description } = req.body;
+  const newItem = {
+    id: items.length + 1,
+    name: name || 'New Item',
+    description: description || 'No description'
+  };
+  items.push(newItem);
+  res.status(201).json(newItem);
+});
+
+// PUT update item
+app.put('/api/items/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  const { name, description } = req.body;
+  
+  const itemIndex = items.findIndex(item => item.id === id);
+  if (itemIndex === -1) {
+    return res.status(404).json({ error: 'Item not found' });
+  }
+  
+  items[itemIndex] = { ...items[itemIndex], name, description };
+  res.json(items[itemIndex]);
+});
+
+// DELETE item
+app.delete('/api/items/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  const itemIndex = items.findIndex(item => item.id === id);
+  
+  if (itemIndex === -1) {
+    return res.status(404).json({ error: 'Item not found' });
+  }
+  
+  items.splice(itemIndex, 1);
+  res.json({ message: 'Item deleted successfully' });
+});
+
+app.listen(PORT, () => {
+  console.log(\`${prompt} fullstack server running on port \${PORT}\`);
+});`;
+
+    const readme = `# ${prompt} Fullstack Application
+
+## Description
+This is a fullstack application generated for: ${prompt}
+
+## Project Structure
+\`\`\`
+├── frontend/          # React frontend
+├── backend/           # Node.js/Express backend
+└── README.md
+\`\`\`
+
+## Backend Setup
+\`\`\`bash
+cd backend
+npm install
+npm start
+\`\`\`
+
+## Frontend Setup
+\`\`\`bash
+cd frontend
+npm install
+npm start
+\`\`\`
+
+## Features
+- React frontend with modern UI
+- Node.js/Express REST API
+- CRUD operations
+- Real-time data updates
+- Responsive design
+
+## API Endpoints
+- GET /api/items - Get all items
+- POST /api/items - Create new item
+- PUT /api/items/:id - Update item
+- DELETE /api/items/:id - Delete item
+`;
+
+    return [
+      // Frontend files
+      {
+        name: 'frontend/package.json',
+        content: frontendPackageJson,
+        language: 'json'
+      },
+      {
+        name: 'frontend/src/App.js',
+        content: frontendAppJs,
+        language: 'javascript'
+      },
+      {
+        name: 'frontend/src/App.css',
+        content: frontendAppCss,
+        language: 'css'
+      },
+      {
+        name: 'frontend/public/index.html',
+        content: `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${prompt.split(' ').slice(0, 3).join(' ')}</title>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>`,
+        language: 'html'
+      },
+      // Backend files
+      {
+        name: 'backend/package.json',
+        content: backendPackageJson,
+        language: 'json'
+      },
+      {
+        name: 'backend/server.js',
+        content: backendServerJs,
+        language: 'javascript'
+      },
+      {
+        name: 'backend/.env',
+        content: `PORT=5000
+NODE_ENV=development`,
+        language: 'env'
+      },
+      {
+        name: 'README.md',
+        content: readme,
+        language: 'markdown'
+      }
+
       return {
-        content: `Ready to build! Try: "Create a todo app", "Build a calculator", or "Make a snake game"`,
+        content: `Ready to build! Try: "Create a todo app", "Build a React app", "Make a Node.js API", or "Create a fullstack e-commerce app"`,
         project: 'AI Agent Ready',
         phase: 'Waiting for your request...'
       };
