@@ -129,6 +129,11 @@ const sendMessage = async (req, res) => {
     const messages = conversation.getHistory();
 
     try {
+      // Check if OpenAI API key is configured
+      if (!process.env.OPENAI_API_KEY) {
+        throw new Error('OpenAI API key is not configured. Please set OPENAI_API_KEY environment variable.');
+      }
+
       // Call OpenAI API
       const completion = await openai.chat.completions.create({
         model: conversation.aiModel,

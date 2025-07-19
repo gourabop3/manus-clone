@@ -86,30 +86,35 @@ const HomePage = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative py-20 px-4 bg-gradient-to-br from-primary/5 via-background to-secondary/5">
+      <section className="relative py-20 px-4 bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
         <div className="container mx-auto text-center">
           <div className="max-w-4xl mx-auto">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+            <div className="mb-6">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                ✨ AI Agent Platform
+              </span>
+            </div>
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-slate-900 via-blue-600 to-slate-900 dark:from-white dark:via-blue-400 dark:to-white bg-clip-text text-transparent">
               Leave it to Manus
             </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+            <p className="text-xl md:text-2xl text-slate-600 dark:text-slate-300 mb-8 max-w-3xl mx-auto leading-relaxed">
               Manus is a general AI agent that bridges minds and actions: it doesn't just think, it delivers results.
             </p>
             
             {/* Quick Start Input */}
-            <div className="max-w-2xl mx-auto mb-8">
-              <div className="flex flex-col sm:flex-row gap-4">
+            <div className="max-w-3xl mx-auto mb-8">
+              <div className="flex flex-col sm:flex-row gap-4 p-2 bg-white dark:bg-slate-800 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700">
                 <Input
                   placeholder="Give Manus a task to work on..."
                   value={taskInput}
                   onChange={(e) => setTaskInput(e.target.value)}
-                  className="flex-1 h-12 text-lg"
+                  className="flex-1 h-14 text-lg border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
                   onKeyPress={(e) => e.key === 'Enter' && handleQuickStart()}
                 />
                 <Button 
                   size="lg" 
                   onClick={handleQuickStart}
-                  className="h-12 px-8"
+                  className="h-14 px-8 bg-blue-600 hover:bg-blue-700 text-white rounded-xl"
                 >
                   {isAuthenticated ? 'Start Task' : 'Get Started'}
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -118,14 +123,14 @@ const HomePage = () => {
             </div>
 
             {/* Quick Action Buttons */}
-            <div className="flex flex-wrap justify-center gap-4 mb-12">
+            <div className="flex flex-wrap justify-center gap-3 mb-12">
               {['Research', 'Write', 'Analyze', 'Create', 'Design'].map((action) => (
                 <Button
                   key={action}
                   variant="outline"
                   size="sm"
                   onClick={() => setTaskInput(`Help me ${action.toLowerCase()} `)}
-                  className="hover:bg-primary hover:text-primary-foreground transition-colors"
+                  className="hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 dark:hover:bg-blue-900/20 dark:hover:text-blue-300 dark:hover:border-blue-700 transition-all duration-200 rounded-full px-4 py-2"
                 >
                   <Sparkles className="mr-2 h-4 w-4" />
                   {action}
@@ -137,24 +142,24 @@ const HomePage = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 px-4">
+      <section className="py-20 px-4 bg-white dark:bg-slate-900">
         <div className="container mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Powerful AI Capabilities</h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-slate-900 dark:text-white">Powerful AI Capabilities</h2>
+            <p className="text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
               Manus excels at various tasks in work and life, getting everything done while you rest.
             </p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
-              <Card key={index} className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-                <CardHeader>
-                  <div className={`w-12 h-12 rounded-lg ${feature.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                    <feature.icon className="h-6 w-6 text-white" />
+              <Card key={index} className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border-0 bg-gradient-to-br from-slate-50 to-white dark:from-slate-800 dark:to-slate-900">
+                <CardHeader className="pb-4">
+                  <div className={`w-14 h-14 rounded-xl ${feature.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg`}>
+                    <feature.icon className="h-7 w-7 text-white" />
                   </div>
-                  <CardTitle className="text-xl">{feature.title}</CardTitle>
-                  <CardDescription className="text-base">
+                  <CardTitle className="text-xl text-slate-900 dark:text-white">{feature.title}</CardTitle>
+                  <CardDescription className="text-base text-slate-600 dark:text-slate-300">
                     {feature.description}
                   </CardDescription>
                 </CardHeader>
@@ -165,22 +170,22 @@ const HomePage = () => {
       </section>
 
       {/* Use Cases Section */}
-      <section className="py-20 px-4 bg-muted/30">
+      <section className="py-20 px-4 bg-slate-50 dark:bg-slate-800">
         <div className="container mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Popular Use Cases</h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-slate-900 dark:text-white">Popular Use Cases</h2>
+            <p className="text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
               See what others are building with Manus
             </p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {useCases.map((useCase, index) => (
-              <Card key={index} className="cursor-pointer hover:shadow-md transition-shadow">
+              <Card key={index} className="cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-0 bg-white dark:bg-slate-900">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-semibold text-lg">{useCase.title}</h3>
-                    <Badge className={useCase.color}>
+                    <h3 className="font-semibold text-lg text-slate-900 dark:text-white">{useCase.title}</h3>
+                    <Badge className={`${useCase.color} rounded-full px-3 py-1`}>
                       {useCase.category}
                     </Badge>
                   </div>
@@ -192,27 +197,27 @@ const HomePage = () => {
       </section>
 
       {/* Stats Section */}
-      <section className="py-20 px-4">
+      <section className="py-20 px-4 bg-white dark:bg-slate-900">
         <div className="container mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
             <div className="space-y-2">
-              <div className="text-4xl font-bold text-primary">10K+</div>
-              <div className="text-muted-foreground">Tasks Completed</div>
+              <div className="text-5xl font-bold text-blue-600 dark:text-blue-400">10K+</div>
+              <div className="text-slate-600 dark:text-slate-300 text-lg">Tasks Completed</div>
             </div>
             <div className="space-y-2">
-              <div className="text-4xl font-bold text-primary">500+</div>
-              <div className="text-muted-foreground">Active Users</div>
+              <div className="text-5xl font-bold text-blue-600 dark:text-blue-400">500+</div>
+              <div className="text-slate-600 dark:text-slate-300 text-lg">Active Users</div>
             </div>
             <div className="space-y-2">
-              <div className="text-4xl font-bold text-primary">99.9%</div>
-              <div className="text-muted-foreground">Uptime</div>
+              <div className="text-5xl font-bold text-blue-600 dark:text-blue-400">99.9%</div>
+              <div className="text-slate-600 dark:text-slate-300 text-lg">Uptime</div>
             </div>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-4 bg-primary text-primary-foreground">
+      <section className="py-20 px-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white">
         <div className="container mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
             Ready to get started?
@@ -223,21 +228,21 @@ const HomePage = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             {!isAuthenticated && (
               <>
-                <Button size="lg" variant="secondary" asChild>
+                <Button size="lg" variant="secondary" asChild className="bg-white text-blue-600 hover:bg-gray-100">
                   <Link to="/register">
                     <Users className="mr-2 h-5 w-5" />
                     Sign Up Free
                   </Link>
                 </Button>
-                <Button size="lg" variant="outline" asChild>
-                  <Link to="/login" className="text-primary-foreground border-primary-foreground hover:bg-primary-foreground hover:text-primary">
+                <Button size="lg" variant="outline" asChild className="border-white text-white hover:bg-white hover:text-blue-600">
+                  <Link to="/login">
                     Sign In
                   </Link>
                 </Button>
               </>
             )}
             {isAuthenticated && (
-              <Button size="lg" variant="secondary" asChild>
+              <Button size="lg" variant="secondary" asChild className="bg-white text-blue-600 hover:bg-gray-100">
                 <Link to="/chat">
                   <Zap className="mr-2 h-5 w-5" />
                   Start Chatting
